@@ -30,7 +30,7 @@ void wifi_initialization(void)
 {
   wm.setDebugOutput(false);       // TRUE para verificar infos de conexão no monitor serial
   WiFi.mode(WIFI_STA);            // conectar no WiFi com dados salvos na memória flash
-  wm.setConfigPortalTimeout(120); // portal de wifi aberto por 180s
+  wm.setConfigPortalTimeout(180); // portal de wifi aberto por 180s
 
   if (is_first_initialization)
   {
@@ -40,16 +40,8 @@ void wifi_initialization(void)
     wm.resetSettings(); // sempre que ligar resetar WiFi
   }
 
-  auto_wifi_connect = wm.autoConnect("ESP_SAMUEL", "password"); // password protected ap
-                                                                //
-                                                                //   if(!res) {
-                                                                //        Serial.println("Failed to connect");
-                                                                //        // ESP.restart();
-                                                                //   }
-                                                                //   else {
-                                                                //        //if you get here you have connected to the WiFi
-                                                                //        Serial.println("connected...yeey :)");
-                                                                //   }
+  auto_wifi_connect = wm.autoConnect("ESP_SAMUEL", "password"); //conexão automática no WiFi
+
   if (DEBUG_WIFI)
   {
     Serial.println("\n*************** WiFi INFORMATION ***************");
@@ -59,7 +51,7 @@ void wifi_initialization(void)
     Serial.println("************************************************");
   }
 
-  (WiFi.status() != WL_CONNECTED) ? is_wifi_connected = 0 : is_wifi_connected = 1;
+  (WiFi.status() == WL_CONNECTED) ? is_wifi_connected = 1 : is_wifi_connected = 0;
 }
 
 void callback(char *topic, byte *payload, unsigned int length)
@@ -102,8 +94,8 @@ char io_initialization(void)
   pinMode(PIN_POS3, OUTPUT);
 
   digitalWrite(LED_GREEN, LOW);
-  digitalWrite(LED_RED, LOW);
-  digitalWrite(PIN_POS3, LOW);
+  digitalWrite(LED_RED,   LOW);
+  digitalWrite(PIN_POS3,  LOW);
   digitalWrite(PIN_NEG3, HIGH);
 
   ret = 0;
@@ -173,6 +165,7 @@ void wifi_reconnect(void)
       if (DEBUG_WIFI) Serial.println("WiFi já está conectado");
     }
   }
+
   void handle_errors(void)
   {
     wifi_reconnect(); // tentativa de reconectar wifi
