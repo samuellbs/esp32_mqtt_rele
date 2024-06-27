@@ -171,7 +171,7 @@ void wifi_reconnect(void)
     wifi_reconnect(); // tentativa de reconectar wifi
     // mqtt_reconnect(); //tentativa de reconectar mqtt
   }
-
+//teste
   void setup()
   {
     Serial.begin(115200);
