@@ -10,16 +10,19 @@
 #include <Adafruit_SSD1306.h>
 #include <WiFiManager.h>
 #include <EEPROM.h>
+#include "esp_bt.h"
 
 WiFiManager wm; //WiFi
-
+WiFiClient espClient;
+PubSubClient client(espClient);
 
 
 //==========================================================================================
 // DEBUG
 //==========================================================================================
 
-#define SERIAL 1
+#define SERIAL     0
+#define DEBUG_WIFI 0
 
 //==========================================================================================
 // PINOS - ESP32
@@ -41,7 +44,7 @@ WiFiManager wm; //WiFi
 
 
 //==========================================================================================
-// DEFINIÇÕES MQTT
+// DEFINIÇÕES MQTT e WIFI
 //==========================================================================================
 
 #define SERVER     "45.55.139.88"   //servidor node-red
@@ -50,7 +53,10 @@ WiFiManager wm; //WiFi
 #define TOPIC      "topico/teste"   //tópico mqtt
 #define MQTT_USER  "SB"             
 #define MQTT_PSWD  "Grandchase2" 
-  
+
+#define MAX_ATTEMPTS_WIFI 5         //máximo de tentativas de reconectar no wifi
+#define MAX_ATTEMPTS_MQTT 5         //máximo de tentativas de reconectar no mqtt
+
 
 //==========================================================================================
 // DEFINIÇÕES DISPLAY
@@ -67,9 +73,9 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 // FLAGS E VARIÁVEIS TIMER 
 //==========================================================================================
 
-char fs_100ms = 0;   //flags de estado para cada x segundos
-char fs_1s    = 0;
-char fs_60s   = 0;
+char is_100ms = 0;   //flags de estado para cada x segundos
+char is_1s    = 0;
+char is_60s   = 0;
 
 unsigned long millis_atual_1ms;
 unsigned long millis_atual_10ms;
@@ -83,7 +89,8 @@ unsigned long millis_atual_60s;
 
 bool is_first_initialization = 1;  //indica se é a primeira inicialização do ESP32
 bool is_wifi_connected       = 0;  //indica se o dispositivo está conectado no WiFi
-
+bool is_mqtt_connected       = 0;  //indica se o dispositivo está conectado no MQTT
+bool auto_wifi_connect       = 0; //variável para a conexão automática do WiFi Manager 
 
 //==========================================================================================
 // VARIABLES
