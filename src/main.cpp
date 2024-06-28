@@ -37,7 +37,7 @@ void wifi_initialization(void)
     is_first_initialization = 0;
     EEPROM.write(FIRST_INIT_ADDRESS, is_first_initialization);
     EEPROM.commit();
-    wm.resetSettings(); // sempre que ligar resetar WiFi
+    wm.resetSettings(); // sempre que ligar pela primeira vez resetar WiFi
   }
 
   auto_wifi_connect = wm.autoConnect("ESP_SAMUEL", "password"); //conexão automática no WiFi
@@ -56,21 +56,17 @@ void wifi_initialization(void)
 
 void callback(char *topic, byte *payload, unsigned int length)
 {
-  if (SERIAL)
+  if (DEBUG_WIFI){
     Serial.print("Message arrived in topic: ");
-  if (SERIAL)
     Serial.println(TOPIC);
-  if (SERIAL)
     Serial.print("Message:");
   for (int i = 0; i < length; i++)
   {
-    if (SERIAL)
       Serial.print((char)payload[i]);
   }
-  if (SERIAL)
     Serial.println();
-  if (SERIAL)
     Serial.println("-----------------------");
+  }
 }
 
 void mqtt_initialization(void)
@@ -79,8 +75,7 @@ void mqtt_initialization(void)
   client.setCallback(callback);
 
   (!client.connect("ESP-32", MQTT_USER, MQTT_PSWD)) ? is_mqtt_connected = 0 : is_mqtt_connected = 1;
-  if (SERIAL)
-    Serial.println("MQTT- Connect OK");
+  if (DEBUG_WIFI && is_mqtt_connected) Serial.println("MQTT- Connect OK");
   client.subscribe(TOPIC);
 }
 
@@ -115,9 +110,10 @@ void system_initialization(void)
   // btStop();
   EEPROM.begin(EEPROM_SIZE);
   is_first_initialization = EEPROM.read(FIRST_INIT_ADDRESS); // É a primeira inicialização ? Se sim, configura WiFi
-  io_initialization();
-  display_initialization();
-  wifi_initialization();
+  io_initialization()     ;        //inicializar pinos
+  display_initialization();        //inicializar display
+  wifi_initialization()   ;        //inicializar wifi
+  mqtt_initialization()   ;        //inicializar mqtt
 }
 
 void wifi_reconnect(void)
@@ -166,12 +162,54 @@ void wifi_reconnect(void)
     }
   }
 
-  void handle_errors(void)
+void mqtt_reconnect(void)
+{
+  static uint16_t reconnect_mqtt_counter    = 0;    // contador para tentar conectar a cada x segundos no mqtt
+  static uint16_t reconnect_attempt_counter = 0;    // contador de tentativas de reconectar no mqtt
+
+  if (!is_mqtt_connected && is_wifi_connected) //para garantir tentativa de reconexão somente se WiFi estiver conectado
   {
-    wifi_reconnect(); // tentativa de reconectar wifi
-    // mqtt_reconnect(); //tentativa de reconectar mqtt
+    reconnect_mqtt_counter++;
+    if(reconnect_mqtt_counter > MAX_ATTEMPTS_MQTT)
+    {
+      reconnect_attempt_counter++;
+      if(reconnect_attempt_counter <= MAX_ATTEMPTS_MQTT)
+      {
+        mqtt_initialization(); //função para conexão MQTT
+        if(is_mqtt_connected)
+        {
+          reconnect_mqtt_counter    = 0;
+          reconnect_attempt_counter = 0;
+          if (DEBUG_WIFI) Serial.println("MQTT reconectado com sucesso");
+        }
+         else
+         {
+          is_mqtt_connected = 0;
+          if (DEBUG_WIFI) Serial.println("Falha na tentativa de reconexão ao MQTT.");
+         }
+      }
+      else
+      {
+        if (DEBUG_WIFI)
+          Serial.println("Número de tentativas atingidas");
+        reconnect_mqtt_counter    = 0; 
+        reconnect_attempt_counter = 0; // para tentar novamente
+      }
+    }
   }
-//teste
+  else
+  {
+    reconnect_mqtt_counter = 0; // se tiver conectado, mantém o contador em zero
+    if (DEBUG_WIFI) Serial.println("MQTT já está conectado");
+  }
+}
+
+void handle_errors(void)
+  {
+    wifi_reconnect(); //tentativa de reconectar wifi (tem que ser primeiro para verificar status wifi)
+    mqtt_reconnect(); //tentativa de reconectar mqtt
+  }
+
   void setup()
   {
     Serial.begin(115200);
@@ -182,6 +220,11 @@ void wifi_reconnect(void)
   {
     handle_timers();
 
+    if(is_100ms)
+    {
+      is_100ms = 0;
+      client.loop();
+    }
     if (is_1s)
     {
       is_1s = 0;
