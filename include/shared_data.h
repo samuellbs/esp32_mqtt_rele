@@ -10,7 +10,11 @@
 #include <Adafruit_SSD1306.h>
 #include <WiFiManager.h>
 #include <EEPROM.h>
-#include "esp_bt.h"
+
+
+//==========================================================================================
+// INSTANCIANDO OBJETOS
+//==========================================================================================
 
 WiFiManager wm; //WiFi
 WiFiClient espClient;
@@ -62,10 +66,14 @@ PubSubClient client(espClient);
 // DEFINIÇÕES DISPLAY
 //==========================================================================================  
 
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
-// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
-#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino resetpin)
+#define SCREEN_WIDTH      128    // OLED display width, in pixels
+#define SCREEN_HEIGHT     64     // OLED display height, in pixels
+#define OLED_RESET       -1      // Reset pin # (or -1 if sharing Arduino resetpin)
+#define TEXT_SIZE_LARGE   2      // Tamanho da letra: grande
+#define TEXT_SIZE_MEDIUM  1.9    // Tamanho da letra: médio
+#define TEXT_SIZE_SMALL   1.0    // Tamanho da letra: pequeno
+#define TEXT_COLOR        WHITE  // cor de letra: branco
+
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 
@@ -90,17 +98,33 @@ unsigned long millis_atual_60s;
 bool is_first_initialization = 1;  //indica se é a primeira inicialização do ESP32
 bool is_wifi_connected       = 0;  //indica se o dispositivo está conectado no WiFi
 bool is_mqtt_connected       = 0;  //indica se o dispositivo está conectado no MQTT
-bool auto_wifi_connect       = 0; //variável para a conexão automática do WiFi Manager 
+bool auto_wifi_connect       = 0;  //variável para a conexão automática do WiFi Manager 
 
 //==========================================================================================
 // VARIABLES
 //==========================================================================================
 
+
+//==========================================================================================
+// TYPEDEF ENUM
+//==========================================================================================
+
+ typedef enum  //referenciar numero com palavra
+ {
+  START     = 0,
+  SITUATION = 1,
+ }Tela;
+
+
 //==========================================================================================
 // STRUCT
 //==========================================================================================
 
-
+typedef struct
+{
+  uint16_t nivel;
+  uint16_t tela;
+}Oled;
 
 struct Payload {
   String        macAddress      ;

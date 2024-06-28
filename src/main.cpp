@@ -1,5 +1,11 @@
 #include "shared_data.h"
 
+
+//==========================================================================================
+// INSTANCIANDO OBJETOS
+//==========================================================================================
+Oled oled;
+
 void handle_timers(void)
 {
   /*      Descrição de funcionamento:
@@ -114,6 +120,7 @@ void system_initialization(void)
   display_initialization();        //inicializar display
   wifi_initialization()   ;        //inicializar wifi
   mqtt_initialization()   ;        //inicializar mqtt
+  oled.tela = START       ;        //inicializar display na tela de início
 }
 
 void wifi_reconnect(void)
@@ -205,18 +212,65 @@ void mqtt_reconnect(void)
 }
 
 void handle_errors(void)
-  {
+{
     wifi_reconnect(); //tentativa de reconectar wifi (tem que ser primeiro para verificar status wifi)
     mqtt_reconnect(); //tentativa de reconectar mqtt
-  }
+}
 
-  void setup()
-  {
+void display_start_screen(const char* companyName, const char* titleName, const char* authorName, const char* profession) {
+  display.clearDisplay();
+  display.setTextSize(TEXT_SIZE_SMALL);
+  display.setTextColor(TEXT_COLOR);
+  display.setRotation(2);
+  display.setCursor(28, 0);
+  display.println(companyName);
+  display.setCursor(20, 18);
+  display.print(titleName);
+  display.setCursor(0, 40);
+  display.print("Autor: ");
+  display.print(authorName);
+  display.setCursor(0, 55);
+  display.print(profession);
+  display.display();
+}
+
+void display_situation_screen(const char* titleName)
+{
+  display.clearDisplay();
+  display.setTextSize(TEXT_SIZE_SMALL);
+  display.setTextColor(TEXT_COLOR);
+  display.setRotation(2);
+  display.setCursor(28, 0);
+  display.println(titleName);
+
+}
+
+void display_update(void)
+{
+  oled.nivel = 0; //menu só tem um nível
+  switch (oled.nivel) {
+    case 0:
+      switch (oled.tela) {
+        case START:
+          display_start_screen("SB INDUSTRIES", "Reles Latch MQTT", "Samuel", "Eng Eletronico");
+          break;
+        case SITUATION:
+          display_situation_screen;
+          break;
+        // Adicione outros casos conforme necessário
+      }
+      break;
+  }
+}
+
+
+void setup()
+{
     Serial.begin(115200);
     system_initialization();
-  } // end setup
+} // end setup
 
-  void loop()
+void loop()
   {
     handle_timers();
 
@@ -224,10 +278,12 @@ void handle_errors(void)
     {
       is_100ms = 0;
       client.loop();
+      display_update();
+      //display_start_screen("SB INDUSTRIES", "Reles MQTT", "Samuel", "Eng Eletronico");
     }
     if (is_1s)
     {
       is_1s = 0;
       handle_errors();
     }
-  } // end loop
+} // end loop
