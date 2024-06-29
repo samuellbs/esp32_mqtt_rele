@@ -91,6 +91,7 @@ unsigned long millis_atual_100ms;
 unsigned long millis_atual_1s;
 unsigned long millis_atual_60s;
 
+
 //==========================================================================================
 // FLAGS GERAIS
 //==========================================================================================
@@ -99,7 +100,7 @@ bool is_first_initialization = 1;  //indica se é a primeira inicialização do 
 bool is_wifi_connected       = 0;  //indica se o dispositivo está conectado no WiFi
 bool is_mqtt_connected       = 0;  //indica se o dispositivo está conectado no MQTT
 bool auto_wifi_connect       = 0;  //variável para a conexão automática do WiFi Manager 
-
+bool is_start_screen_display = 0;  //variável para tela inicial do sistema
 //==========================================================================================
 // VARIABLES
 //==========================================================================================
@@ -126,13 +127,11 @@ typedef struct
   uint16_t tela;
 }Oled;
 
-struct Payload {
-  String        macAddress      ;
-  char          devAddress[12]  ;
-  String        type            ;
-  unsigned int  slot            ;
-  float         battery         ;
-  char          status[10]      ;
-};
+typedef struct 
+{
+  const char* rele_1_state;   // Estado do relé 1 (ligado/desligado)
+  const char* rele_2_state;   // Estado do relé 2 (ligado/desligado)
+  const char* rele_3_state;   // Estado do relé 3 (ligado/desligado)
+}Rele;
 
 #endif // SHARED_DATA_H

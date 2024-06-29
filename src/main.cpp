@@ -4,7 +4,9 @@
 //==========================================================================================
 // INSTANCIANDO OBJETOS
 //==========================================================================================
+
 Oled oled;
+Rele rele;
 
 void handle_timers(void)
 {
@@ -120,7 +122,7 @@ void system_initialization(void)
   display_initialization();        //inicializar display
   wifi_initialization()   ;        //inicializar wifi
   mqtt_initialization()   ;        //inicializar mqtt
-  oled.tela = START       ;        //inicializar display na tela de início
+  oled.tela = START       ;        //inicializar o display na tela de início
 }
 
 void wifi_reconnect(void)
@@ -234,7 +236,7 @@ void display_start_screen(const char* companyName, const char* titleName, const 
   display.display();
 }
 
-void display_situation_screen(const char* titleName)
+void display_situation_screen(const char* titleName, const char* statusRele_3)
 {
   display.clearDisplay();
   display.setTextSize(TEXT_SIZE_SMALL);
@@ -242,12 +244,22 @@ void display_situation_screen(const char* titleName)
   display.setRotation(2);
   display.setCursor(28, 0);
   display.println(titleName);
+  display.setCursor(0, 40);
+  display.print("Rele 3: ");
+  display.print(statusRele_3);
+  display.display();
+}
 
+void rele_update(void)
+{ 
+  rele.rele_3_state = digitalRead(PIN_FEED3) ? "ON" : "OFF";  //se tiver ligado ON, desligado OFF
 }
 
 void display_update(void)
 {
-  oled.nivel = 0; //menu só tem um nível
+  static uint8_t start_screen_counter = 0; //contador para manter tela de início por x segundos
+  rele_update();                           //atualizar o estado dos reles (feedback)
+  oled.nivel = 0;                          //menu só tem um nível
   switch (oled.nivel) {
     case 0:
       switch (oled.tela) {
@@ -255,14 +267,12 @@ void display_update(void)
           display_start_screen("SB INDUSTRIES", "Reles Latch MQTT", "Samuel", "Eng Eletronico");
           break;
         case SITUATION:
-          display_situation_screen;
+          display_situation_screen("RELES SITUATION", rele.rele_3_state);
           break;
-        // Adicione outros casos conforme necessário
       }
       break;
   }
 }
-
 
 void setup()
 {
@@ -279,7 +289,6 @@ void loop()
       is_100ms = 0;
       client.loop();
       display_update();
-      //display_start_screen("SB INDUSTRIES", "Reles MQTT", "Samuel", "Eng Eletronico");
     }
     if (is_1s)
     {
