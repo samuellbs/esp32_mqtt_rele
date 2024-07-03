@@ -219,7 +219,8 @@ void handle_errors(void)
     mqtt_reconnect(); //tentativa de reconectar mqtt
 }
 
-void display_start_screen(const char* companyName, const char* titleName, const char* authorName, const char* profession) {
+void display_start_screen(const char* companyName, const char* titleName, const char* authorName, const char* profession) 
+{
   display.clearDisplay();
   display.setTextSize(TEXT_SIZE_SMALL);
   display.setTextColor(TEXT_COLOR);
@@ -250,15 +251,16 @@ void display_situation_screen(const char* titleName, const char* statusRele_3)
   display.display();
 }
 
-void rele_update(void)
+
+const char* rele_update(void)
 { 
-  rele.rele_3_state = digitalRead(PIN_FEED3) ? "ON" : "OFF";  //se tiver ligado ON, desligado OFF
+  return digitalRead(PIN_FEED3) ? "ON" : "OFF";  // se tiver ligado ON, desligado OFF
 }
 
 void display_update(void)
 {
   static uint8_t start_screen_counter = 0; //contador para manter tela de início por x segundos
-  rele_update();                           //atualizar o estado dos reles (feedback)
+  rele.rele_3_state = rele_update();                           //atualizar o estado dos reles (feedback)
   oled.nivel = 0;                          //menu só tem um nível
   switch (oled.nivel) {
     case 0:

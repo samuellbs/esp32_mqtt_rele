@@ -51,10 +51,10 @@ PubSubClient client(espClient);
 // DEFINIÇÕES MQTT e WIFI
 //==========================================================================================
 
-#define SERVER     "45.55.139.88"   //servidor node-red
-#define PORT       1883             //porta mqtt
-#define DEVICE_ID  ""               //nome do dispositivo (cliente name)
-#define TOPIC      "topico/teste"   //tópico mqtt
+#define SERVER     "45.55.139.88"                         //servidor node-red
+#define PORT       1883                                   //porta mqtt
+#define DEVICE_ID  ""                                     //nome do dispositivo (cliente name)
+#define TOPIC      "SB/esp32-rele-latch@esp32/devices/"   //tópico mqtt
 #define MQTT_USER  "SB"             
 #define MQTT_PSWD  "Grandchase2" 
 
@@ -123,8 +123,8 @@ bool is_start_screen_display = 0;  //variável para tela inicial do sistema
 
 typedef struct
 {
-  uint16_t nivel;
-  uint16_t tela;
+  uint16_t nivel;   // nível do menu
+  uint16_t tela;    // nível da tela
 }Oled;
 
 typedef struct 
