@@ -51,20 +51,25 @@ void wifi_initialization(void)
   (is_wifi_connected) ? digitalWrite(LED_GREEN, HIGH) : digitalWrite(LED_GREEN, LOW); // WiFi ON = LED ON
 }
 
-void callback(char *topic, byte *payload, unsigned int length)
+void callback(char *topic, byte *payload, unsigned int length) 
 {
-  if (DEBUG_WIFI){
+  if (length < sizeof(mqtt_global_message))
+  {
+    memcpy(mqtt_global_message, payload, length);
+    mqtt_global_message[length] = '\0';  // Adiciona o caractere nulo ao final
+    is_new_mqtt_message = true;          // Indica que uma nova mensagem foi recebida
+  }
+  
+  if (DEBUG_WIFI) 
+  {
     Serial.print("Message arrived in topic: ");
     Serial.println(TOPIC);
-    Serial.print("Message:");
-  for (int i = 0; i < length; i++)
-  {
-      Serial.print((char)payload[i]);
-  }
-    Serial.println();
+    Serial.print("Message: ");
+    Serial.println(mqtt_global_message);
     Serial.println("-----------------------");
   }
 }
+
 
 void mqtt_initialization(void)
 {
@@ -264,6 +269,20 @@ void display_update(void)
   }
 }
 
+void processMessageMQTT(const char* message) 
+{
+  if (strcmp(message, "true") == 0)
+  {
+    digitalWrite(PIN_POS3, HIGH); //ligar o relé
+    digitalWrite(PIN_NEG3, LOW);
+  }
+  else if (strcmp(message, "false") == 0) 
+  {
+    digitalWrite(PIN_POS3, LOW); //desligar o relé
+    digitalWrite(PIN_NEG3, HIGH);
+  }
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -272,23 +291,32 @@ void setup()
 
 void loop()
   {
+    if(is_new_mqtt_message) 
+    {
+      is_new_mqtt_message = false;
+      processMessageMQTT(mqtt_global_message);
+    }
+
      handle_timers(&timer100ms); // Passa o endereço de timer100ms para a função
      handle_timers(&timer1s);    // Passa o endereço de timer1s para a função
      handle_timers(&timer60s);   // Passa o endereço de timer60s para a função
     
-    if (timer100ms.flag) {
+    if (timer100ms.flag) 
+    {
         timer100ms.flag = false; // Reseta o flag
         client.loop();    
         display_update();
-    }
-    
+      }
+
     if (timer1s.flag) 
-    {
+     {
         timer1s.flag = false;  // Reseta o flag
         handle_errors(); 
-    }
-        if (timer60s.flag) 
-        {
-        timer60s.flag = false; // Reseta o flag
-    }
+      }
+
+     if (timer60s.flag) 
+     {
+      timer60s.flag = false; // Reseta o flag
+      }
+
 } // end loop

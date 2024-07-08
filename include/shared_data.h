@@ -76,22 +76,6 @@ PubSubClient client(espClient);
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-
-//==========================================================================================
-// FLAGS E VARIÁVEIS TIMER 
-//==========================================================================================
-
-char is_100ms = 0;   //flags de estado para cada x segundos
-char is_1s    = 0;
-char is_60s   = 0;
-
-unsigned long millis_atual_1ms;
-unsigned long millis_atual_10ms;
-unsigned long millis_atual_100ms;
-unsigned long millis_atual_1s;
-unsigned long millis_atual_60s;
-
-
 //==========================================================================================
 // FLAGS GERAIS
 //==========================================================================================
@@ -101,10 +85,12 @@ bool is_wifi_connected       = 0;  //indica se o dispositivo está conectado no 
 bool is_mqtt_connected       = 0;  //indica se o dispositivo está conectado no MQTT
 bool auto_wifi_connect       = 0;  //variável para a conexão automática do WiFi Manager 
 bool is_start_screen_display = 0;  //variável para tela inicial do sistema
+bool is_new_mqtt_message     = 0;  //indica se há nova mensagem mqtt
+
 //==========================================================================================
 // VARIABLES
 //==========================================================================================
-
+char mqtt_global_message[6]; // 5 caracteres + caractere nulo
 
 //==========================================================================================
 // TYPEDEF ENUM
