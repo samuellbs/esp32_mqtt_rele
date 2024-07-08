@@ -121,6 +121,13 @@ bool is_start_screen_display = 0;  //variável para tela inicial do sistema
 // STRUCT
 //==========================================================================================
 
+typedef struct 
+{
+    unsigned long lastUpdate; // Última vez que o temporizador foi verificado
+    unsigned long interval;   // Duranção do intervalo em ms
+    bool flag;                // Flag indicando se o intervalo foi alcançado
+} Timer;
+
 typedef struct
 {
   uint16_t nivel;   // nível do menu

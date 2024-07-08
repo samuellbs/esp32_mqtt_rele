@@ -5,33 +5,21 @@
 // INSTANCIANDO OBJETOS
 //==========================================================================================
 
+Timer timer100ms = {0, 100,   false};  // lastUpdate = 0 | interval = 100ms   | flag = false
+Timer timer1s    = {0, 1000,  false};  // lastUpdate = 0 | interval = 1000ms  | flag = false
+Timer timer60s   = {0, 60000, false};  // lastUpdate = 0 | interval = 60000ms | flag = false
+
 Oled oled;
 Rele rele;
 
-void handle_timers(void)
+void handle_timers(Timer* timer) 
 {
-  /*      Descrição de funcionamento:
-
-         Definição de tempo de timers
-  */
-  unsigned long t_atual;
-  t_atual = millis(); // função milis retorna o tempo que o microcontrolador está ligado
-
-  if (t_atual - millis_atual_100ms >= 99) // 100ms
-  {
-    millis_atual_100ms = t_atual;
-    is_100ms = 1;
-  }
-  if (t_atual - millis_atual_1s >= 999) // 1s
-  {
-    millis_atual_1s = t_atual;
-    is_1s = 1;
-  }
-  if (t_atual - millis_atual_60s >= 59999) // 60s
-  {
-    millis_atual_60s = t_atual;
-    is_60s = 1;
-  }
+  unsigned long currentMillis = millis();                   // Obtém o tempo atual
+  if (currentMillis - timer->lastUpdate >= timer->interval) // Verifica se o intervalo foi alcançado
+    { 
+      timer->lastUpdate = currentMillis;                    // Atualiza o lastUpdate com previousMillis
+      timer->flag = true;                                   // Define o flag como true (intervalo alcançado)
+    }
 }
 
 void wifi_initialization(void)
@@ -59,7 +47,8 @@ void wifi_initialization(void)
     Serial.println("************************************************");
   }
 
-  (WiFi.status() == WL_CONNECTED) ? is_wifi_connected = 1 : is_wifi_connected = 0;
+  (WiFi.status() == WL_CONNECTED) ? is_wifi_connected = 1 : is_wifi_connected = 0;    // Para verificar se WiFi conectou
+  (is_wifi_connected) ? digitalWrite(LED_GREEN, HIGH) : digitalWrite(LED_GREEN, LOW); // WiFi ON = LED ON
 }
 
 void callback(char *topic, byte *payload, unsigned int length)
@@ -84,6 +73,7 @@ void mqtt_initialization(void)
 
   (!client.connect("ESP-32", MQTT_USER, MQTT_PSWD)) ? is_mqtt_connected = 0 : is_mqtt_connected = 1;
   if (DEBUG_WIFI && is_mqtt_connected) Serial.println("MQTT- Connect OK");
+  (is_mqtt_connected) ? digitalWrite(LED_RED, HIGH) : digitalWrite(LED_RED, LOW); // MQTT ON = LED ON
   client.subscribe(TOPIC);
 }
 
@@ -115,14 +105,13 @@ char display_initialization(void)
 
 void system_initialization(void)
 {
-  // btStop();
   EEPROM.begin(EEPROM_SIZE);
   is_first_initialization = EEPROM.read(FIRST_INIT_ADDRESS); // É a primeira inicialização ? Se sim, configura WiFi
   io_initialization()     ;        //inicializar pinos
   display_initialization();        //inicializar display
   wifi_initialization()   ;        //inicializar wifi
   mqtt_initialization()   ;        //inicializar mqtt
-  oled.tela = START       ;        //inicializar o display na tela de início
+  oled.tela = SITUATION   ;        //inicializar o display na tela de início
 }
 
 void wifi_reconnect(void)
@@ -131,6 +120,7 @@ void wifi_reconnect(void)
   static uint16_t reconnect_attempt_counter = 0;    // contador de tentativas de reconectar no wifi
 
   (WiFi.status() == WL_CONNECTED) ? is_wifi_connected = 1 : is_wifi_connected = 0;
+  (is_wifi_connected) ? digitalWrite(LED_GREEN, HIGH) : digitalWrite(LED_GREEN, LOW);
 
   if (!is_wifi_connected)
   {
@@ -251,7 +241,6 @@ void display_situation_screen(const char* titleName, const char* statusRele_3)
   display.display();
 }
 
-
 const char* rele_update(void)
 { 
   return digitalRead(PIN_FEED3) ? "ON" : "OFF";  // se tiver ligado ON, desligado OFF
@@ -259,8 +248,7 @@ const char* rele_update(void)
 
 void display_update(void)
 {
-  static uint8_t start_screen_counter = 0; //contador para manter tela de início por x segundos
-  rele.rele_3_state = rele_update();                           //atualizar o estado dos reles (feedback)
+  rele.rele_3_state = rele_update();       //atualizar o estado dos reles (feedback)
   oled.nivel = 0;                          //menu só tem um nível
   switch (oled.nivel) {
     case 0:
@@ -284,17 +272,23 @@ void setup()
 
 void loop()
   {
-    handle_timers();
-
-    if(is_100ms)
-    {
-      is_100ms = 0;
-      client.loop();
-      display_update();
+     handle_timers(&timer100ms); // Passa o endereço de timer100ms para a função
+     handle_timers(&timer1s);    // Passa o endereço de timer1s para a função
+     handle_timers(&timer60s);   // Passa o endereço de timer60s para a função
+    
+    if (timer100ms.flag) {
+        timer100ms.flag = false; // Reseta o flag
+        client.loop();    
+        display_update();
     }
-    if (is_1s)
+    
+    if (timer1s.flag) 
     {
-      is_1s = 0;
-      handle_errors();
+        timer1s.flag = false;  // Reseta o flag
+        handle_errors(); 
+    }
+        if (timer60s.flag) 
+        {
+        timer60s.flag = false; // Reseta o flag
     }
 } // end loop
